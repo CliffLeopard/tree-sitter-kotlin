@@ -82,7 +82,7 @@ dependencies = [
 
 [[package]]
 name = "tree-sitter-kotlin-ng"
-version = "1.0.1"
+version = "1.1.0"
 dependencies = [
  "cc",
  "tree-sitter",
