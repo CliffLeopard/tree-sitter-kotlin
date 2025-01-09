@@ -1,6 +1,6 @@
-#include "tree_sitter/array.h"
 #include "tree_sitter/parser.h"
 
+#include <string.h>
 #include <wctype.h>
 
 enum TokenType {
@@ -23,13 +23,6 @@ enum TokenType {
 static inline void advance(TSLexer *lexer) { lexer->advance(lexer, false); }
 
 static inline void skip(TSLexer *lexer) { lexer->advance(lexer, true); }
-
-static inline bool scan_whitespace_and_comments(TSLexer *lexer) {
-    while (iswspace(lexer->lookahead)) {
-        skip(lexer);
-    }
-    return lexer->lookahead != '/';
-}
 
 static bool scan_word(TSLexer *lexer, const char *const word) {
     for (uint8_t i = 0; word[i] != '\0'; i++) {
