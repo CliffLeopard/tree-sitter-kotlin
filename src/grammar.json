@@ -3297,31 +3297,15 @@
         },
         {
           "type": "SYMBOL",
-          "name": "string_literal"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "multiline_string_literal"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "character_literal"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "number_literal"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "float_literal"
-        },
-        {
-          "type": "SYMBOL",
           "name": "object_literal"
         },
         {
           "type": "SYMBOL",
           "name": "collection_literal"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "literal_constant"
         },
         {
           "type": "SYMBOL",
@@ -5459,6 +5443,35 @@
         }
       ]
     },
+    "literal_constant": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "boolean_literal"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "number_literal"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "float_literal"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "character_literal"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "string_literal"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "multiline_string_literal"
+        }
+      ]
+    },
     "string_literal": {
       "type": "SEQ",
       "members": [
@@ -6020,6 +6033,19 @@
         ]
       }
     },
+    "boolean_literal": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "true"
+        },
+        {
+          "type": "STRING",
+          "value": "false"
+        }
+      ]
+    },
     "variance_modifier": {
       "type": "CHOICE",
       "members": [
@@ -6439,6 +6465,7 @@
     "expression",
     "primary_expression",
     "type",
-    "statement"
+    "statement",
+    "literal_constant"
   ]
 }
