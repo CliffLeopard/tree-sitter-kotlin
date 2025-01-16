@@ -636,6 +636,7 @@ module.exports = grammar({
       $.float_literal,
       $.object_literal,
       $.collection_literal,
+      $.boolean_literal,
       $.navigation_expression,
       $.binary_expression,
       $.unary_expression,
@@ -1019,6 +1020,8 @@ module.exports = grammar({
         ),
       ));
     },
+
+    boolean_literal: $ => choice('true', 'false'),
 
     variance_modifier: _ => choice(
       'in',
