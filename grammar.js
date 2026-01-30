@@ -264,10 +264,11 @@ module.exports = grammar({
 
     constructor_invocation: $ => seq($.type, $.value_arguments),
 
-    function_declaration: $ => prec.right(1, seq(
+    function_declaration: $ => prec.right(2, seq(
       optional($.modifiers),
       'fun',
       optional($.type_parameters),
+      // (H) Keep optional('.') to allow both extension functions and regular functions
       optional(seq($._receiver_type, optional('.'))),
       field('name', $._identifier),
       $.function_value_parameters,
@@ -439,7 +440,8 @@ module.exports = grammar({
     ),
 
     statement: $ => choice(
-      $.declaration,
+      // (H) declaration has higher priority to prefer function_declaration over anonymous_function
+      prec(1, $.declaration),
       $.assignment,
       $.for_statement,
       $.while_statement,
@@ -543,10 +545,12 @@ module.exports = grammar({
 
     type: $ => choice(
       $.user_type,
-      $.nullable_type,
       $.function_type,
-      $.non_nullable_type,
+      // (H) Modified parenthesized_type to support optional type_modifiers like suspend
+      // e.g., (suspend ((String) -> Unit))
       $.parenthesized_type,
+      $.nullable_type,
+      $.non_nullable_type,
       'dynamic',
     ),
 
@@ -560,11 +564,20 @@ module.exports = grammar({
 
     _simple_user_type: $ => prec.right(seq($._identifier, optional($.type_arguments))),
 
-    nullable_type: $ => seq(
-      optional($.type_modifiers),
-      $.type,
+    nullable_type: $ => prec.right(seq(
+      // (H) Removed optional($.type_modifiers) to avoid incorrectly matching
+      // non-nullable types with modifiers (like suspend)
+      $._base_type,
       '?',
-    ),
+    )),
+
+    // (H) Base type without modifiers, used by nullable_type
+    _base_type: $ => prec(1, choice(
+      $.user_type,
+      $.function_type,
+      $.parenthesized_type,
+      'dynamic',
+    )),
 
     non_nullable_type: $ => prec.right(seq(
       optional($.type_modifiers),
@@ -584,7 +597,8 @@ module.exports = grammar({
       ),
     ),
 
-    type_arguments: $ => seq('<', commaSep1($.type_projection), '>'),
+    // (H) Added optional trailing comma to support Kotlin style
+    type_arguments: $ => seq('<', commaSep1($.type_projection), optional(','), '>'),
 
     type_projection: $ => choice(
       seq(repeat($.variance_modifier), $.type),
@@ -605,7 +619,9 @@ module.exports = grammar({
       ')',
     ),
 
-    parenthesized_type: $ => seq('(', $.type, ')'),
+    // (H) Modified to support optional type_modifiers inside parentheses
+    // e.g., (suspend ((String) -> Unit)) parses suspend as modifier of inner parenthesized type
+    parenthesized_type: $ => seq('(', optional($.type_modifiers), $.type, ')'),
 
     assignment: $ => seq(
       field('left', $.expression),
@@ -765,7 +781,8 @@ module.exports = grammar({
       $.multi_variable_declaration,
     ),
 
-    anonymous_function: $ => prec.right(seq(
+    // (H) Lower precedence to prefer function_declaration over anonymous_function
+    anonymous_function: $ => prec.right(-1, seq(
       'fun',
       optional(seq($.type, '.')),
       $.function_value_parameters,
@@ -860,11 +877,24 @@ module.exports = grammar({
       optional($._semi),
     ),
 
-    _when_condition: $ => choice(
-      $.expression,
-      $.range_test,
-      $.type_test,
+    _when_condition: $ => seq(
+      choice(
+        $.expression,
+        $.range_test,
+        $.type_test,
+      ),
+      // (H) Support for Kotlin 2.1 guard conditions: `is Type if (condition) -> ...`
+      optional($.guard_condition),
     ),
+
+    guard_condition: $ => prec(1, seq(
+      'if',
+      // (H) Parentheses are optional in Kotlin guard conditions
+      choice(
+        seq('(', $.expression, ')'),
+        $.expression,
+      ),
+    )),
 
     range_test: $ => seq(
       choice(alias($._in, 'in'), '!in'),
@@ -947,7 +977,7 @@ module.exports = grammar({
           token.immediate(prec(1, /[^"\\\$]+/)),
           '$',
         ),
-        $.string_content,
+          $.string_content,
         ),
         $.escape_sequence,
         $.interpolation,
